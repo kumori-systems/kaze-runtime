@@ -1,0 +1,12 @@
+{
+    "working-stamp": "localstamp",
+    "domain": "domain.com",
+    "runtime": {
+        "parent": "eslap://eslap.cloud/runtime/native/1_0_1",
+        "folder": "/eslap/component",
+        "entrypoint": "/eslap/runtime-agent/scripts/start-runtime-agent.sh"
+    },
+    "stamps": {
+        "localstamp": "http://localhost:8090"
+    }
+}
