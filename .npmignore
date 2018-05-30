@@ -1,0 +1,6 @@
+src
+test
+build/test
+tsconfig.json
+taskfile.js
+.git
