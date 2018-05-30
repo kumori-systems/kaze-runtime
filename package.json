@@ -1,7 +1,7 @@
 {
-  "name": "kaze-runtime",
+  "name": "@kumori/runtime",
   "version": "0.3.1",
-  "description": "SaaSDK Runtime Lib",
+  "description": "Kumori Runtime Lib",
   "author": "ITI",
   "scripts": {
     "build": "taskr build",
