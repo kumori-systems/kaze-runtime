@@ -1,8 +1,8 @@
 {
-  "name": "runtime",
+  "name": "kaze-runtime",
   "version": "0.3.1",
-  "description": "ECloud Runtime Lib",
-  "author": "Albert Duato Botam <aduato@iti.es>",
+  "description": "SaaSDK Runtime Lib",
+  "author": "ITI",
   "scripts": {
     "build": "taskr build",
     "lint": "taskr lint",
