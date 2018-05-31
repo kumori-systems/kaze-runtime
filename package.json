@@ -10,7 +10,8 @@
     "clean": "taskr clean",
     "superclean": "taskr superclean"
   },
-  "main": "build/src/index",
+  "main": "lib/index",
+  "types": "lib/index.d.ts",
   "engines": {
     "node": "4.4.5"
   },

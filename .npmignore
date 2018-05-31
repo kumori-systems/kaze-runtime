@@ -1,6 +1,7 @@
 /src
 /test
-/build/test
+/lib-test
 /tsconfig.json
 /taskfile.js
 /.git
+/jest.config.js
