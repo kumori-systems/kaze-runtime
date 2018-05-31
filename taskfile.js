@@ -62,7 +62,7 @@ exports.test = function * (task) {
 //     })
 // }
 
-// exports.lint = function * (task) {
-//   yield task.source('./{src,test}/**/*.coffee')
-//     .shell('coffeelint $glob')
-// }
+exports.lint = function * (task) {
+  yield task.source('./{src,test}/**/*.ts')
+    .shell('tslint $glob')
+}
