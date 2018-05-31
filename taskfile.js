@@ -27,11 +27,21 @@ exports.mrproper = function * (task) {
   yield task.clear(['node_modules'])
 }
 
+// exports.build = function * (task) {
+//   let tsopts = getJSON('./tsconfig.json')
+//   yield task.source('src/**/*.ts')
+//     .typescript(tsopts)
+//     .target('lib')
+// }
+
 exports.build = function * (task) {
-  let tsopts = getJSON('./tsconfig.json')
-  yield task.source('src/**/*.ts')
-    .typescript(tsopts)
-    .target('lib')
+
+  yield task.source('./tsconfig.json')
+    .shell({
+      cmd: 'tsc -p $glob --outDir lib',
+      preferLocal: true,
+      glob: true
+    })
 }
 
 exports.buildtest = function * (task) {
