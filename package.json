@@ -6,7 +6,7 @@
   "scripts": {
     "build": "taskr build",
     "lint": "taskr lint",
-    "test": "jest",
+    "test": "jest --runInBand",
     "clean": "taskr clean",
     "superclean": "taskr superclean"
   },
@@ -16,8 +16,8 @@
     "node": "4.4.5"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/kumori-systems/runtime.git"
+    "type": "git",
+    "url": "https://github.com/kumori-systems/runtime.git"
   },
   "dependencies": {
     "@types/archiver": "^2.0.1",

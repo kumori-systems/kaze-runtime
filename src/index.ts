@@ -1,4 +1,5 @@
 import { DockerServer } from './docker';
+import { RuntimeHelper } from './runtime-helper';
 import { statSync, createWriteStream, createReadStream, existsSync, readFileSync } from 'fs';
 import * as q from 'q';
 import * as ncp from 'ncp';
@@ -22,7 +23,33 @@ import * as child_process from 'child_process';
 // Put this in a configuration file
 const TMP_PATH = '/tmp/kaze';
 const docker = new DockerServer();
+const helper = new RuntimeHelper();
 const MANIFEST_FILENAME = 'Manifest.json'
+
+
+
+/**
+* Install the Docker image corresponding to a given runtime URN. The image will
+* be fetched from Docker Hub according to some conversion rules defined in
+* DOMAIN_CONFIG.
+* 
+* 
+* @param urn The runtime URN
+* @returns a promise resolved once the runtime image is installed locally
+*/
+export function install(urn: string): Promise<any> {
+
+  let imageData = helper.imageDataFromUrn(urn);
+
+  // Pull image from Hub
+  return docker.pullImage(imageData.hubName)
+  .then( (imageTag) => {
+    // Rename image to expected tag
+    return docker.changeImageTag(imageTag, imageData.localRepo,
+      imageData.localVersion);
+  })
+}
+
 
 function getJSON(filepath: string): any {
   const jsonString = "g = " + readFileSync(filepath, 'utf8') + "; g";

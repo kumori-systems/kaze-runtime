@@ -1,6 +1,7 @@
-import * as Docker from 'dockerode';
+import * as url from 'url';
 import * as fs from 'fs';
 import * as child from 'child_process';
+import * as Docker from 'dockerode';
 
 
 export interface DockerOptions {
@@ -24,10 +25,83 @@ export class DockerServer {
     this.docker = new Docker(config);
   }
 
+  // Gather information about an image
+  public inspectImage(imageTag: string): Promise<any> {
+    // console.log("INSPECTING " + imageTag + " ...");
+    return new Promise((resolve, reject) => {
+      let image = this.docker.getImage(imageTag);
+      image.inspect( (err, data) => {
+        if (err) {
+          return reject(new Error('Error inspecting image ' + imageTag + ' : ' +
+            err));
+        } else {
+          return resolve(data);
+        }
+      })
+    })
+  }
+  
+  
+  // Tag an image (named after imageTag) with a new repo name and tag
+  public tagImage(imageTag: string, newRepo: string, newTag: string):
+  Promise<string> {
+    // console.log("TAGGING " + imageTag + " as " + newRepo + ":" + newTag + " ...");
+    return new Promise((resolve, reject) => {
+      let image = this.docker.getImage(imageTag);
+      // console.log("IMAGE: " + image);
+      image.tag( { repo: newRepo, tag: newTag }, (err, data) => {
+        if (err) {
+          return reject(new Error('Error tagging image ' + imageTag + ' as ' +
+          newRepo + ":" + newTag + ' : ' + err))
+        } else {
+          return resolve(newRepo + ":" + newTag)
+        }
+      })
+    })
+  }
+  
+
+  // "Rename" an image, by creating a new tag and removing the old one
+  public changeImageTag(currentTag: string, newRepo: string, newTag: string):
+  Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.tagImage(currentTag, newRepo, newTag)
+      .then( (imageTag) => {
+        return this.deleteImage(currentTag);
+      })
+      .then( () => {
+        resolve(newRepo + ":" + newTag);
+      })
+      .catch( (err) => {
+        reject(err);
+      })
+    })
+  }
+
+
+  // Pull an image from Docker Hub
+  public pullImage(imageTag: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.docker.pull(imageTag, (err, stream) => {
+        this.docker.modem.followProgress(stream, onFinished, onProgress);
+        function onFinished(err, output) {
+          if (err) {
+            return reject(new Error('Error pulling image ' + imageTag + ' : ' +
+              err))
+          } else {
+            return resolve(imageTag)
+          }
+        }
+        function onProgress(event) {}
+      });      
+    })
+  }
+
+  
   // Build and tags new Docker image from a Dockerfile.
   public build(runtimeFolder: string, tag:string): Promise<string> {
     return new Promise((resolve, reject) => {
-      console.log("Runtime.build()");
+      // console.log("Runtime.build()");
       this.preBuild(runtimeFolder, tag, resolve, reject);
     })
   }
@@ -209,7 +283,7 @@ export class DockerServer {
           if (error) {
             reject(error);
           } else {
-            console.log("RESULT", result);
+            // console.log("RESULT", result);
             resolve();
           }
         });
