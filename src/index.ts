@@ -32,8 +32,8 @@ const MANIFEST_FILENAME = 'Manifest.json'
 * Install the Docker image corresponding to a given runtime URN. The image will
 * be fetched from Docker Hub according to some conversion rules defined in
 * DOMAIN_CONFIG.
-* 
-* 
+*
+*
 * @param urn The runtime URN
 * @returns a promise resolved once the runtime image is installed locally
 */
@@ -75,7 +75,7 @@ function untar_(tarfile:string, dstPath:string){
 function tar_(srcPath:string, tarfile:string){
   return new Promise((resolve, reject) => {
     let out = fs.createWriteStream(tarfile)
-    tar.pack(srcPath).pipe(out) 
+    tar.pack(srcPath).pipe(out)
     out.on('finish', () => {
       resolve()
     })
@@ -90,11 +90,11 @@ export function bundle(runtimeFolder: string, manifestPath: string, targetFile: 
     if ((!runtimeFolder) || (runtimeFolder.length == 0)) {
       return Promise.reject('Runtime folder not found');
     }
-    
+
     if ((!manifestPath) || (manifestPath.length == 0)) {
-      return Promise.reject('Manifest path undefined');      
-    } 
-    
+      return Promise.reject('Manifest path undefined');
+    }
+
     if ((!targetFile) || (targetFile.length == 0)) {
       return Promise.reject('Target file undefined');
     }
@@ -112,7 +112,7 @@ export function bundle(runtimeFolder: string, manifestPath: string, targetFile: 
     let lastSlash = targetFile.lastIndexOf('/');
     if (lastSlash > 0) {
       let targetFolder = targetFile.substring(0, lastSlash);
-      mkdirp.sync(targetFolder);              
+      mkdirp.sync(targetFolder);
     }
 
     let manifest = getJSON(manifestPath);
@@ -139,11 +139,19 @@ export function bundle(runtimeFolder: string, manifestPath: string, targetFile: 
       return docker.save(targetFullImageFile, targetTag);
     })
     .then(() => {
-      return findBaseLayer(manifest.derived.from);
+      let parentTag = createTagFromRuntimeName(manifest.derived.from)
+      return docker.areEqual(parentTag, targetTag)
     })
-    .then((baseLayer) => {
-      console.log("BaseLayer: " + baseLayer);
-      return generateDelta(targetFullImageFile, targetDeltaImageFile, baseLayer, versionTag, deltaDir);
+    .then((areEqual) => {
+        if (areEqual) {
+          return generateDelta(targetFullImageFile, targetDeltaImageFile, deltaDir)
+        } else {
+          return findBaseLayer(manifest.derived.from)
+          .then((baseLayer) => {
+            console.log("BaseLayer: " + baseLayer);
+            return generateDelta(targetFullImageFile, targetDeltaImageFile, deltaDir, baseLayer, versionTag);
+          })
+        }
     })
     .then(() => {
       return checksumFile(targetDeltaImageFile);
@@ -179,11 +187,11 @@ function findBaseLayer(parent:string):Promise<string>{
   let parsedURL = url.parse( parsedPath.dir);
   let runtimeName = parsedURL.hostname + parsedURL.pathname;
   let runtimeVersion = parsedPath.base;
-  let runtimeTag = runtimeName + ':' + runtimeVersion;  
+  let runtimeTag = runtimeName + ':' + runtimeVersion;
   let parentTarDir = path.join(TMP_PATH, 'runtime', runtimeName);
   let parentTarPath = path.join(parentTarDir, 'image.tgz');
-  try{   
-    mkdirp.sync(parentTarDir);   
+  try{
+    mkdirp.sync(parentTarDir);
     if(process.platform != 'win32'){
       child_process.execSync(
         'set -o errexit; ' +
@@ -205,17 +213,17 @@ function findBaseLayer(parent:string):Promise<string>{
   }catch(err){
     child_process.execSync(`rm -rf ${parentTarDir}`);
     return Promise.reject('ERROR => findBaseLayer => ' + err);
-  }  
+  }
 }
 
 function extractLastLayerId(imageTarDir:string):Promise<any>{
-  console.log("Extracting last layer Id from parent...");  
+  console.log("Extracting last layer Id from parent...");
   try{
     let imageTarPath = path.join(imageTarDir, 'image.tgz');
     let tmpDir = path.join(imageTarDir, 'layers');
     mkdirp.sync(tmpDir);
-    let repositoriesFile = path.join(tmpDir, 'repositories');   
-    return untar_(imageTarPath, tmpDir)      
+    let repositoriesFile = path.join(tmpDir, 'repositories');
+    return untar_(imageTarPath, tmpDir)
     .then(() => {
       let repositories = getJSON(repositoriesFile);
       let layer = repositories[Object.keys(repositories)[0]]['latest'];
@@ -224,14 +232,14 @@ function extractLastLayerId(imageTarDir:string):Promise<any>{
       child_process.execSync(`rm -rf ${imageTarDir}`);
       console.log("\tLayer id: " + jsonFromFile.parent);
       return Promise.resolve(jsonFromFile.parent);
-    })      
-  }catch(err){      
+    })
+  }catch(err){
     child_process.execSync(`rm -rf ${imageTarDir}`);
     return Promise.reject('ERROR => extractLastLayerId => ' + err);
-  }    
+  }
 }
 
-function generateDelta(fullImageTar:string, destFilename:string, baseLayer:string, versionTag:string, deltaDir:string): Promise<any> {
+function generateDelta(fullImageTar:string, destFilename:string, deltaDir: string, baseLayer?:string, versionTag?:string): Promise<any> {
   console.log("Generating Delta Image...");
   let deltaTmpDir = path.join(deltaDir, 'layers');
   let deltaCopyDir = path.join(deltaDir, 'new');
@@ -239,18 +247,22 @@ function generateDelta(fullImageTar:string, destFilename:string, baseLayer:strin
   try{
     mkdirp.sync(deltaTmpDir);
     mkdirp.sync(deltaCopyDir);
-    console.log("\tExtracting full image: " + fullImageTar);  
-    return untar_(fullImageTar, deltaTmpDir)      
+    console.log("\tExtracting full image: " + fullImageTar);
+    return untar_(fullImageTar, deltaTmpDir)
     .then(() => {
-      console.log("\tReading reposirories.");
-      let repositories = getJSON(repositoriesFile);    
-      console.log("\tSearching base layer: ", baseLayer);
-      let layer = repositories[Object.keys(repositories)[0]][versionTag];
-      return processLayer(layer, baseLayer, deltaTmpDir, deltaCopyDir)
+      if (baseLayer) {
+        console.log("\tReading reposirories.");
+        let repositories = getJSON(repositoriesFile);
+        console.log("\tSearching base layer: ", baseLayer);
+        let layer = repositories[Object.keys(repositories)[0]][versionTag];
+        return processLayer(layer, baseLayer, deltaTmpDir, deltaCopyDir)
+      } else {
+        return Promise.resolve()
+      }
     })
     .then(() => {
       console.log("\tLayer processing finished OK.");
-      return ncp_(repositoriesFile, `${deltaCopyDir}/repositories`);          
+      return ncp_(repositoriesFile, `${deltaCopyDir}/repositories`);
     })
     .then(() => {
       return globCopy_(`${deltaTmpDir}/*.json`, deltaCopyDir);
@@ -262,22 +274,22 @@ function generateDelta(fullImageTar:string, destFilename:string, baseLayer:strin
     .then(() => {
       console.log("\tDelta created.");
       console.log("\tLoading image in local Docker.");
-      //child_process.execSync('docker load -i ' + destFilename);      
+      //child_process.execSync('docker load -i ' + destFilename);
       console.log("\tRemoving temporary files.");
       return Promise.resolve();
-    })    
-  }catch(err){      
+    })
+  }catch(err){
     child_process.execSync(`rm -rf ${deltaDir}`);
     return Promise.reject('ERROR => generateDelta => ' + err);
-  } 
+  }
 }
 
 function processLayer(layer:string, baseLayer:string, deltaTmpDir:string, deltaCopyDir:string): Promise<any>{
   console.log('\t\tProcessing layer: ', layer);
-  try{    
+  try{
     if(layer == baseLayer){
       console.log('\t\tFound Base image layer: ');
-      return Promise.resolve(); 
+      return Promise.resolve();
     }else if(layer == undefined){
       console.log('\t\tNo base image found.');
       return Promise.reject('No base image found.');
@@ -362,7 +374,7 @@ function createBundleFile(dockerFilePath: string, targetFilePath: string,  manif
       // console.log('archiver has been finalized and the output file descriptor has closed.');
       resolve();
     });
-    
+
     // This event is fired when the data source is drained no matter what was the data source.
     // It is not part of this library but rather from the NodeJS Stream API.
     // @see: https://nodejs.org/api/stream.html#stream_event_end
@@ -370,7 +382,7 @@ function createBundleFile(dockerFilePath: string, targetFilePath: string,  manif
       // console.log('Data has been drained');
       resolve();
     });
-    
+
     // Manages warnings (ie stat failures and other non-blocking errors)
     archive.on('warning', function(err) {
       reject(err);
@@ -380,7 +392,7 @@ function createBundleFile(dockerFilePath: string, targetFilePath: string,  manif
       //     // throw error
       // }
     });
-    
+
     // Manages errors
     archive.on('error', function(err) {
       reject(err);
@@ -401,7 +413,7 @@ function createBundleFile(dockerFilePath: string, targetFilePath: string,  manif
     console.log('\tadded runtime/Manifest.json');
     archive.append(JSON.stringify(blobManifest, null, 2), {name: 'runtime/Manifest.json'} );
 
-    // Finalize the archive (ie we are done appending files but streams have to 
+    // Finalize the archive (ie we are done appending files but streams have to
     // finish yet)
     // 'close', 'end' or 'finish' may be fired right after calling this method so
     // register to them beforehand
@@ -409,6 +421,14 @@ function createBundleFile(dockerFilePath: string, targetFilePath: string,  manif
   });
 }
 
+function createTagFromRuntimeName(name: string) {
+  let parsedPath = path.parse(name);
+  let parsedURL = url.parse( parsedPath.dir);
+  let runtimeName = parsedURL.hostname + parsedURL.pathname;
+  let runtimeVersion = parsedPath.base;
+  let tag = runtimeName + ':' + runtimeVersion;
+  return tag
+}
 
 // function generateURL(urn:string, baseURL:string, filename:string){
 //   let parsed = url.parse(urn);

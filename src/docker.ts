@@ -40,8 +40,8 @@ export class DockerServer {
       })
     })
   }
-  
-  
+
+
   // Tag an image (named after imageTag) with a new repo name and tag
   public tagImage(imageTag: string, newRepo: string, newTag: string):
   Promise<string> {
@@ -59,7 +59,7 @@ export class DockerServer {
       })
     })
   }
-  
+
 
   // "Rename" an image, by creating a new tag and removing the old one
   public changeImageTag(currentTag: string, newRepo: string, newTag: string):
@@ -93,11 +93,11 @@ export class DockerServer {
           }
         }
         function onProgress(event) {}
-      });      
+      });
     })
   }
 
-  
+
   // Build and tags new Docker image from a Dockerfile.
   public build(runtimeFolder: string, tag:string): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -107,7 +107,7 @@ export class DockerServer {
   }
 
   // Executes a pre-build script if exists
-  private preBuild(runtimeFolder:string, tag:string, onSuccess:any, onError:any){    
+  private preBuild(runtimeFolder:string, tag:string, onSuccess:any, onError:any){
     let self = this;
     let preBuildScriptPath = runtimeFolder+"/pre_build.sh";
     if (fs.existsSync(preBuildScriptPath)){
@@ -165,7 +165,7 @@ export class DockerServer {
   //       },{
   //         t: tag
   //       }, (err, response) => {
-  //         if (err) {              
+  //         if (err) {
   //           onError(err)
   //         } else {
   //           response.pipe(process.stdout);
@@ -214,12 +214,12 @@ export class DockerServer {
   //         } else if (stderr) {
   //           reject(stderr);
   //         } else {
-  //           resolve();                    
+  //           resolve();
   //         }
   //       });
   //     } catch(error) {
   //       reject(error);
-  //     }  
+  //     }
   //   })
   // }
 
@@ -266,12 +266,12 @@ export class DockerServer {
   //         } else if (stderr) {
   //           reject(stderr);
   //         } else {
-  //           resolve();                    
+  //           resolve();
   //         }
   //       });
   //     } catch(error) {
   //       reject(error);
-  //     }  
+  //     }
   //   })
   // }
 
@@ -302,12 +302,23 @@ export class DockerServer {
   //         } else if (stderr) {
   //           reject(stderr);
   //         } else {
-  //           resolve();                    
+  //           resolve();
   //         }
   //       });
   //     } catch(error) {
   //       reject(error);
-  //     }  
+  //     }
   //   })
   // }
+
+  public async areEqual(image1: string, image2: string): Promise<boolean> {
+    let history1 = await this.docker.getImage(image1).history()
+    let history2 = await this.docker.getImage(image2).history()
+    if (history1[0].Id && history2[0].Id && (history1[0].Id.localeCompare(history2[0].Id) == 0)) {
+      return true
+    } else {
+      return false
+    }
+  }
+
 }

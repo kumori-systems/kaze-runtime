@@ -5,6 +5,7 @@ import { statSync, existsSync } from 'fs';
 
 const USED_DOCKER_IMGS = [
   'test.com/runtime/test:1_0_0',
+  'test.com/runtime/empty:1_0_0',
   'kumori/test.image:2_0_0',
   'eslap.cloud/test/image:2_0_0'
 ]
@@ -30,6 +31,7 @@ function deletePath(p: string) {
 
 function cleanup() {
   deletePath(WORKSPACE_PATH + "/runtimes/test.com/test/dist");
+  deletePath(WORKSPACE_PATH + "/runtimes/test.com/empty/dist");
   deletePath(TMP_PATH);
   for(var item of USED_DOCKER_IMGS) {
     // console.log("Deleting image: " + item);
@@ -40,13 +42,13 @@ function cleanup() {
 beforeAll( (done) => {
   cleanup();
   done();
-}) 
+})
 
 
 afterAll( (done) => {
   cleanup()
   done();
-}) 
+})
 
 // export function bundle(runtimeFolder: string, manifestPath: string, targetFile: string): Promise<void> {
 test('bundle', () => {
@@ -63,6 +65,19 @@ test('bundle', () => {
   });
 }, 180000);
 
+test('empty', () => {
+  console.log(`${process.cwd()}`);
+  // let workspace = new Workspace(WORKSPACE_PATH);
+  let runtimeFolder = `${WORKSPACE_PATH}/runtimes/test.com/empty`;
+  let manifestPath = `${runtimeFolder}/Manifest.json`;
+  let targetFile = `${runtimeFolder}/dist/build.zip`;
+  return runtime.bundle(runtimeFolder, manifestPath, targetFile)
+  .then(() => {
+    let stats = statSync(`${WORKSPACE_PATH}/runtimes/test.com/empty/dist/build.zip`);
+    expect(stats.isFile()).toBeTruthy();
+    expect(existsSync(TMP_PATH)).toBeFalsy();
+  });
+}, 180000);
 
 test('Install runtime from URN', (done) => {
 

@@ -23,4 +23,5 @@ export declare class DockerServer {
     private postBuild;
     save(targetFile: string, tag: string): Promise<void>;
     deleteImage(tag: string): Promise<void>;
+    areEqual(image1: string, image2: string): Promise<boolean>;
 }

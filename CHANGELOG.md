@@ -1,9 +1,13 @@
 # Changelog
 
-## v 1.0.1
+## v1.1.1
+
+Bug fix. Runtimes with empty Dockerfile are also bundled.
+
+## v1.1.0
 
 Added runtime install command.
 
-## v 1.0.0
+## v1.0.0
 
 Initial version
