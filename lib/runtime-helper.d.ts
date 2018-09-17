@@ -10,7 +10,9 @@ export declare class RuntimeHelper {
      *
      * RESULT: {
      *   urn: "eslap://eslap.cloud/runtimes/native/dev/privileged/1_0_1",
-     *   tagName: "eslap.cloud/runtimes/native/dev/privileged:1_0_1",
+     *   localImageName: "eslap.cloud/runtimes/native/dev/privileged:1_0_1",
+     *   localRepo: "eslap.cloud/runtimes/native/dev/privileged",
+     *   localVersion: "1_0_1",
      *   hubName: "kumori/runtimes.native.dev.privileged:1_0_1"
      * }
      *

@@ -1,4 +1,3 @@
-import * as url from 'url';
 import * as fs from 'fs';
 import * as child from 'child_process';
 import * as Docker from 'dockerode';
@@ -83,6 +82,10 @@ export class DockerServer {
   public pullImage(imageTag: string): Promise<string> {
     return new Promise((resolve, reject) => {
       this.docker.pull(imageTag, (err, stream) => {
+        if (err) {
+          return reject(new Error('Error pulling image ' + imageTag + ' : ' +
+          err))
+        }
         this.docker.modem.followProgress(stream, onFinished, onProgress);
         function onFinished(err, output) {
           if (err) {

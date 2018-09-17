@@ -11,82 +11,86 @@ const DOMAIN_CONFIG = {
 export class  RuntimeHelper {
 
   constructor() {}
-  
+
   /**
    * Get a runtime image tag and its name in DockerHub from its URN, according to
    * some conversion rules defined in DOMAIN_CONFIG.
-   * 
-   * Example: 
-   * 
+   *
+   * Example:
+   *
    * URN: eslap://eslap.cloud/runtimes/native/dev/privileged/1_0_1
-   * 
+   *
    * RESULT: {
    *   urn: "eslap://eslap.cloud/runtimes/native/dev/privileged/1_0_1",
-   *   tagName: "eslap.cloud/runtimes/native/dev/privileged:1_0_1",
+   *   localImageName: "eslap.cloud/runtimes/native/dev/privileged:1_0_1",
+   *   localRepo: "eslap.cloud/runtimes/native/dev/privileged",
+   *   localVersion: "1_0_1",
    *   hubName: "kumori/runtimes.native.dev.privileged:1_0_1"
    * }
-   * 
+   *
    * @param urn The runtime URN
    * @returns returns an object containing the URN, the tag and it name in Hub
    */
   public imageDataFromUrn(urn: string) {
     let urnParts = this.deconstructURN(urn);
-    
-    if (! (urnParts.domain in DOMAIN_CONFIG)) {
-      throw new Error('Runtime domain not supported: ' + urnParts.domain);
-    }
-  
+
+    // if (! (urnParts.domain in DOMAIN_CONFIG)) {
+    //   throw new Error('Runtime domain not supported: ' + urnParts.domain);
+    // }
+
     if (urnParts.imageRoot.indexOf('.') > -1) {
       throw new Error("Runtime name can't contain dots outside domain:" + urn);
     }
-    
-    let domainConfig = DOMAIN_CONFIG[urnParts.domain];
-    
+
+    let domainConfig = DOMAIN_CONFIG[urnParts.domain] || {
+      repositoryPrefix: urnParts.imagePrefix,
+      tagPrefix: urnParts.imagePrefix
+    }
+
     // Names expected by ECloud for the runtime image
     let localImageName = domainConfig.tagPrefix + urnParts.imageRoot + ':' +
     urnParts.imageVersion;
     let localImageRepo = domainConfig.tagPrefix + urnParts.imageRoot;
     let localImageVersion = urnParts.imageVersion;
-    
-    let imageTagName = domainConfig.tagPrefix + urnParts.imageRoot + ':' +
-      urnParts.imageVersion;
-      
-      let escapedImageRoot = this.applySubstitutions(urnParts.imageRoot,
-        domainConfig.tagToRepoSubstitutions);
-        let imageHubName = domainConfig.repositoryPrefix + escapedImageRoot  + ':' +
-        urnParts.imageVersion;
-        let result = {
-          urn: urn,
+
+    let escapedImageRoot = domainConfig.tagToRepoSubstitutions ?
+      this.applySubstitutions(urnParts.imageRoot, domainConfig.tagToRepoSubstitutions) :
+      urnParts.imageRoot;
+    let imageHubName = domainConfig.repositoryPrefix + escapedImageRoot  + ':' +
+    urnParts.imageVersion;
+    let result = {
+      urn: urn,
       localName: localImageName,
       localRepo: localImageRepo,
       localVersion: localImageVersion,
       hubName: imageHubName
     }
+
     // console.log("IMAGE DATA: " + JSON.stringify(result, null, 2));
     return result;
   }
-    
+
   private applySubstitutions(str: string, subs: Array<any>) {
     for (var sub of subs) {
       str = str.split(sub.src).join(sub.dst);
     }
     return str;
   }
-  
+
   /**
   * Deconstruct a runtime URN and return an object with all its parts.
-  * 
-  * Example: 
-  * 
+  *
+  * Example:
+  *
   * URN: eslap://eslap.cloud/runtimes/native/dev/privileged/1_0_1
-  * 
+  *
   * DECONSTRUCTION: {
   *   domain: "eslap.cloud",
   *   imagePrefix: "eslap.cloud/",
   *   imageRoot: "runtimes/native/dev/privileged",
   *   imageVersion: "1_0_1"
   * }
-  * 
+  *
   * @param urn The URN to deconstruct
   * @returns returns an object containing the deconstructed URN parts
   */
@@ -115,6 +119,6 @@ export class  RuntimeHelper {
   // console.log("DECONSTRUCTED URN: " + JSON.stringify(result, null, 2));
   return result;
 }
- 
+
 
 }

@@ -15,7 +15,6 @@ import * as fs from 'fs';
 let stat = q.denodeify(fs.stat);
 import * as globCopy from 'glob-copy';
 let globCopy_ = q.denodeify(globCopy);
-import * as http from 'http';
 import * as url from 'url';
 import * as path from 'path';
 import * as child_process from 'child_process';
@@ -24,8 +23,6 @@ import * as child_process from 'child_process';
 const TMP_PATH = '/tmp/kaze';
 const docker = new DockerServer();
 const helper = new RuntimeHelper();
-const MANIFEST_FILENAME = 'Manifest.json'
-
 
 
 /**
@@ -41,12 +38,23 @@ export function install(urn: string): Promise<any> {
 
   let imageData = helper.imageDataFromUrn(urn);
 
-  // Pull image from Hub
-  return docker.pullImage(imageData.hubName)
-  .then( (imageTag) => {
-    // Rename image to expected tag
-    return docker.changeImageTag(imageTag, imageData.localRepo,
-      imageData.localVersion);
+  // Install the imatge if it has not been installed already.
+  return docker.inspectImage(imageData.localName)
+  .then(() => {
+    return imageData.localName
+  })
+  .catch(() => {
+    // Pull image from Hub
+    return docker.pullImage(imageData.hubName)
+    .then( (imageTag) => {
+      // Rename image to expected tag
+      if (imageTag.localeCompare(imageData.localRepo) != 0) {
+        return docker.changeImageTag(imageTag, imageData.localRepo,
+          imageData.localVersion);
+      } else {
+        return Promise.resolve(imageTag)
+      }
+    })
   })
 }
 
