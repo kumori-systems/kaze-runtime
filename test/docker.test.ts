@@ -1,4 +1,4 @@
-import {} from 'jest';
+// import {} from 'jest';
 import { DockerServer } from '../src/docker';
 
 const DOCKER_HUB_TEST_IMAGE = 'kumori/test.image:2_0_0';
@@ -85,7 +85,7 @@ test('Docker tag image', (done) => {
 
 
 test('Docker delete tag', (done) => {
-  
+
   docker.deleteImage(IMG_NEW_NAME)
   .then( () => {
     // console.log("DOCKER DELETE IMAGE RESOLVES.");
@@ -99,7 +99,7 @@ test('Docker delete tag', (done) => {
 
 
 test('Docker change tag image', (done) => {
-  
+
   docker.changeImageTag(DOCKER_HUB_TEST_IMAGE, IMG_NEW_REPO,
     IMG_NEW_VERSION)
   .then( (imageTag) => {
@@ -115,7 +115,7 @@ test('Docker change tag image', (done) => {
 
 
 test('Docker delete new tag', (done) => {
-  
+
   docker.deleteImage(IMG_NEW_NAME)
   .then( () => {
     return done()
@@ -128,7 +128,7 @@ test('Docker delete new tag', (done) => {
 
 
 test('Docker delete removed tag (should fail)', (done) => {
-  
+
   let EXPECTED_ERROR = '(HTTP code 404) no such image';
 
   docker.deleteImage(DOCKER_HUB_TEST_IMAGE)

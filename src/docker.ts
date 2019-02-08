@@ -286,7 +286,7 @@ export class DockerServer {
           if (error) {
             reject(error);
           } else {
-            // console.log("RESULT", result);
+            // console.log("--------------> RESULT", result);
             resolve();
           }
         });

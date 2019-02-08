@@ -47,6 +47,7 @@ export function install(urn: string): Promise<any> {
     // Pull image from Hub
     return docker.pullImage(imageData.hubName)
     .then( (imageTag) => {
+
       // Rename image to expected tag
       if (imageTag.localeCompare(imageData.localRepo) != 0) {
         return docker.changeImageTag(imageTag, imageData.localRepo,

@@ -20,23 +20,24 @@ test('RuntimeHelper functions', () => {
     expect(data).toHaveProperty('localRepo');
     expect(data).toHaveProperty('localVersion');
   }
-  
+
   let EXPECTED_ERROR = "Runtime domain not supported"
-  let wrongUrn = 'blabla://bleble/runtime/native/1_0_0'
+  let someUrn = 'blabla://bleble/runtime/native/1_0_0'
   // console.log('________________________________________________________');
   // console.log('URN: ' + wrongUrn);
-  try {
-    let data = helper.imageDataFromUrn(wrongUrn);
-    // console.log('DATA: ' + JSON.stringify(data, null, 2));
-    throw new Error('Should have failed (wrong protocol)');
-  } catch (error) {
-    // console.log("ERROR: " + error.message);
-    // console.log("EXPECTED: " + EXPECTED_ERROR);
-    // console.log("COND: " + error.message.startsWith(EXPECTED_ERROR));
-    
-    if(!error.message.startsWith(EXPECTED_ERROR)) {
-      throw error;
-    }
-  }
-  
+  // Expected response: {
+  //   "urn": "blabla://bleble/runtime/native/1_0_0",
+  //   "localName": "bleble/runtime/native:1_0_0",
+  //   "localRepo": "bleble/runtime/native",
+  //   "localVersion": "1_0_0",
+  //   "hubName": "bleble/runtime/native:1_0_0"
+  // }
+
+  let data = helper.imageDataFromUrn(someUrn);
+  expect(data).toHaveProperty('urn', someUrn)
+  expect(data).toHaveProperty('localName', 'bleble/runtime/native:1_0_0')
+  expect(data).toHaveProperty('localRepo', 'bleble/runtime/native')
+  expect(data).toHaveProperty('localVersion', '1_0_0')
+  expect(data).toHaveProperty('hubName', 'bleble/runtime/native:1_0_0')
+
 }, 180000);
